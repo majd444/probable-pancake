@@ -1,110 +1,92 @@
-import requests
-import json
 import os
+import sys
+import pytest
+import requests
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Configuration
+# Test configuration
 BASE_URL = "http://localhost:8000"
-API_KEY = "c8bc40f2-e83d-4e92-ac2b-d5bd6444da0a"  # From your test chatbot
-ASSISTANT_ID = "e97f4988-4f70-470b-b2e5-aca28ddbcff0"  # From your test chatbot
+TEST_API_KEY = os.getenv("TEST_API_KEY", "c8bc40f2-e83d-4e92-ac2b-d5bd6444da0a")
+TEST_ASSISTANT_ID = os.getenv("TEST_ASSISTANT_ID", "e97f4988-4f70-470b-b2e5-aca28ddbcff0")
+
+def test_health_check():
+    """Test the health check endpoint."""
+    response = requests.get(f"{BASE_URL}/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+    print("✅ Health check passed")
 
 def test_create_session():
     """Test creating a new chat session."""
-    url = f"{BASE_URL}/api/chat/session"
     data = {
-        "api_key": API_KEY,
-        "assistant_id": ASSISTANT_ID
+        "api_key": TEST_API_KEY,
+        "assistant_id": TEST_ASSISTANT_ID
     }
-    
-    print("Creating a new session...")
-    response = requests.post(url, json=data)
-    
-    if response.status_code == 201:
-        session_id = response.json()["session_id"]
-        print(f"✅ Session created successfully. Session ID: {session_id}")
-        return session_id
-    else:
-        print(f"❌ Failed to create session. Status: {response.status_code}")
-        print(f"Response: {response.text}")
-        return None
+    response = requests.post(f"{BASE_URL}/api/chat/session", json=data)
+    assert response.status_code == 200
+    assert "session_id" in response.json()
+    session_id = response.json()["session_id"]
+    print(f"✅ Session created with ID: {session_id}")
+    return session_id
 
-def test_send_message(session_id):
-    """Test sending a message to the chat."""
-    if not session_id:
-        print("❌ No session ID provided. Cannot send message.")
-        return
-        
-    url = f"{BASE_URL}/api/chat"
+def test_chat(session_id):
+    """Test sending a chat message."""
     data = {
-        "api_key": API_KEY,
+        "api_key": TEST_API_KEY,
         "session_id": session_id,
-        "type": "custom_code",
-        "assistant_id": ASSISTANT_ID,
+        "type": "message",
+        "assistant_id": TEST_ASSISTANT_ID,
         "messages": [
-            {
-                "role": "user",
-                "content": "Hello, how are you?"
-            }
+            {"role": "user", "content": "Hello, how are you?"}
         ]
     }
-    
-    print("\nSending a message...")
-    response = requests.post(url, json=data)
-    
-    if response.status_code == 200:
-        print("✅ Message sent successfully.")
-        print(f"Response: {json.dumps(response.json(), indent=2)}")
-    else:
-        print(f"❌ Failed to send message. Status: {response.status_code}")
-        print(f"Response: {response.text}")
+    response = requests.post(f"{BASE_URL}/api/chat", json=data)
+    assert response.status_code == 200
+    assert "response" in response.json()
+    print(f"✅ Chat response: {response.json()['response'][:50]}...")
 
-def test_widget_flow():
-    """Test the widget flow (create session and send message)."""
-    # Create a widget session
-    url = f"{BASE_URL}/api/chat/widget/session"
+def test_widget_session():
+    """Test creating a widget session."""
     data = {
-        "chatbot_id": ASSISTANT_ID
+        "chatbot_id": TEST_ASSISTANT_ID
     }
-    
-    print("\nCreating a widget session...")
-    response = requests.post(url, json=data)
-    
-    if response.status_code == 200:
-        session_id = response.json()["session_id"]
-        print(f"✅ Widget session created. Session ID: {session_id}")
-        
-        # Send a message to the widget
-        url = f"{BASE_URL}/api/chat/widget"
-        data = {
-            "session_id": session_id,
-            "message": "Hello from the widget test!"
-        }
-        
-        print("Sending a message to the widget...")
-        response = requests.post(url, json=data)
-        
-        if response.status_code == 200:
-            print("✅ Widget message sent successfully.")
-            print(f"Response: {json.dumps(response.json(), indent=2)}")
-        else:
-            print(f"❌ Failed to send widget message. Status: {response.status_code}")
-            print(f"Response: {response.text}")
-    else:
-        print(f"❌ Failed to create widget session. Status: {response.status_code}")
-        print(f"Response: {response.text}")
+    response = requests.post(f"{BASE_URL}/api/chat/widget/session", json=data)
+    assert response.status_code == 200
+    assert "session_id" in response.json()
+    session_id = response.json()["session_id"]
+    print(f"✅ Widget session created with ID: {session_id}")
+    return session_id
+
+def test_widget_chat(session_id):
+    """Test sending a widget chat message."""
+    data = {
+        "session_id": session_id,
+        "message": "Hello from widget!"
+    }
+    response = requests.post(f"{BASE_URL}/api/chat/widget", json=data)
+    assert response.status_code == 200
+    assert "response" in response.json()
+    print(f"✅ Widget chat response: {response.json()['response'][:50]}...")
 
 if __name__ == "__main__":
-    print("=== Testing Chat API ===")
+    # Run tests
+    print("🚀 Starting API tests...")
     
-    # Test regular API flow
+    # Test health check
+    test_health_check()
+    
+    # Test regular chat flow
+    print("\n🔍 Testing regular chat flow...")
     session_id = test_create_session()
-    if session_id:
-        test_send_message(session_id)
+    test_chat(session_id)
     
     # Test widget flow
-    test_widget_flow()
+    print("\n🔍 Testing widget flow...")
+    widget_session_id = test_widget_session()
+    test_widget_chat(widget_session_id)
     
-    print("\n=== Test Complete ===")
+    print("\n✨ All tests completed successfully!")
+    sys.exit(0)

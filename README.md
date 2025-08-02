@@ -1,208 +1,194 @@
 # SaaS AI Chatbot Backend
 
-This is the backend service for the SaaS AI Chatbot, built with FastAPI, Supabase, and OpenRouter.
+This is the backend service for the SaaS AI Chatbot application. It provides API endpoints for managing chat sessions and processing messages using OpenRouter AI.
 
 ## Features
 
-- RESTful API endpoints for chat functionality
-- Session management
-- Integration with OpenRouter for AI responses
-- Supabase for data storage
-- CORS enabled for frontend integration
-
-## Prerequisites
-
-- Python 3.8+
-- pip (Python package manager)
-- A Supabase account and project
-- An OpenRouter API key
+- Create chat sessions
+- Process chat messages
+- Widget integration support
+- Supabase database integration
+- OpenRouter AI integration
 
 ## Setup
 
-1. Clone the repository
-2. Create a virtual environment:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/majd444/probable-pancake.git
+   cd probable-pancake/backend
+   ```
+
+2. Create a virtual environment and activate it:
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
+
 3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-4. Set up your environment variables in the `.env` file:
+
+4. Create a `.env` file with your environment variables:
    ```
    SUPABASE_URL=your_supabase_url
    SUPABASE_KEY=your_supabase_key
    OPENROUTER_API_KEY=your_openrouter_api_key
    ```
 
-## Database Setup
-
-1. Create the following tables in your Supabase database:
-
-   ```sql
-   -- Chatbots table
-   CREATE TABLE public.chatbots (
-       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-       api_key TEXT NOT NULL UNIQUE,
-       model_name TEXT NOT NULL,
-       created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-       updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-   );
-
-   -- Sessions table
-   CREATE TABLE public.sessions (
-       session_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-       chatbot_id UUID NOT NULL REFERENCES public.chatbots(id) ON DELETE CASCADE,
-       created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-   );
-
-   -- Conversations table
-   CREATE TABLE public.conversations (
-       id BIGSERIAL PRIMARY KEY,
-       session_id UUID NOT NULL REFERENCES public.sessions(session_id) ON DELETE CASCADE,
-       role TEXT NOT NULL,
-       content TEXT NOT NULL,
-       timestamp TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-   );
-   ```
-
-2. Add a test chatbot:
-   ```sql
-   INSERT INTO public.chatbots (id, api_key, model_name)
-   VALUES ('e97f4988-4f70-470b-b2e5-aca28ddbcff0', 'c8bc40f2-e83d-4e92-ac2b-d5bd6444da0a', 'openai/gpt-3.5-turbo');
-   ```
-
-## Running the Application
-
-1. Start the development server:
+5. Run the application:
    ```bash
    uvicorn app.main:app --reload
    ```
-2. The API will be available at `http://localhost:8000`
-3. Access the interactive API documentation at `http://localhost:8000/docs`
 
-## API Endpoints
+## API Documentation
+
+Once the server is running, you can access the interactive API documentation at:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## Environment Variables
+
+- `SUPABASE_URL`: Your Supabase project URL
+- `SUPABASE_KEY`: Your Supabase anon/public key
+- `OPENROUTER_API_KEY`: Your OpenRouter API key
+
+## License
+
+MIT Chatbot SaaS Backend
+
+This is the backend service for the AI Chatbot SaaS platform, built with FastAPI, Supabase, and OpenRouter.
+
+## Features
+
+- Create and manage chat sessions
+- Process chat messages with OpenRouter's AI models
+- Widget support for easy website integration
+- Session management and conversation history
+- RESTful API endpoints
+
+## Prerequisites
+
+- Python 3.8+
+- pip (Python package manager)
+- Supabase account and project
+- OpenRouter API key
+
+## Setup
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd backend
+   ```
+
+2. Create a virtual environment (recommended):
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Configure environment variables:
+   - Copy `.env.example` to `.env`
+   - Update the values in `.env` with your Supabase and OpenRouter credentials
+
+## Running the Server
+
+```bash
+uvicorn main:app --reload
+```
+
+The server will start at `http://localhost:8000`
+
+## API Documentation
+
+Once the server is running, you can access the interactive API documentation at:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## Endpoints
 
 ### Create a Chat Session
-- **URL**: `/api/chat/session`
-- **Method**: `POST`
-- **Request Body**:
-  ```json
-  {
-    "api_key": "your_api_key",
-    "assistant_id": "your_assistant_id"
-  }
-  ```
-- **Success Response**:
-  ```json
-  {
-    "session_id": "generated-session-id"
-  }
-  ```
+```
+POST /api/chat/session
+```
 
 ### Send a Chat Message
-- **URL**: `/api/chat`
-- **Method**: `POST`
-- **Request Body**:
-  ```json
-  {
-    "api_key": "your_api_key",
-    "session_id": "session-id",
-    "type": "custom_code",
-    "assistant_id": "your_assistant_id",
-    "messages": [
-      {
-        "role": "user",
-        "content": "Hello, how are you?"
-      }
-    ]
-  }
-  ```
-- **Success Response**:
-  ```json
-  {
-    "response": "I'm doing well, thank you for asking! How can I assist you today?"
-  }
-  ```
+```
+POST /api/chat
+```
 
-### Widget Endpoints
+### Create a Widget Session
+```
+POST /api/chat/widget/session
+```
 
-#### Create a Widget Session
-- **URL**: `/api/chat/widget/session`
-- **Method**: `POST`
-- **Request Body**:
-  ```json
-  {
-    "chatbot_id": "your_chatbot_id"
-  }
-  ```
-- **Success Response**:
-  ```json
-  {
-    "session_id": "generated-session-id"
-  }
-  ```
+### Send a Widget Chat Message
+```
+POST /api/chat/widget
+```
 
-#### Send a Widget Message
-- **URL**: `/api/chat/widget`
-- **Method**: `POST`
-- **Request Body**:
-  ```json
-  {
-    "session_id": "session-id",
-    "message": "Hello, how are you?"
-  }
-  ```
-- **Success Response**:
-  ```json
-  {
-    "response": "I'm doing well, thank you for asking! How can I assist you today?"
-  }
-  ```
+### Health Check
+```
+GET /health
+```
+
+## Database Schema
+
+### Tables
+
+#### `chatbots`
+- `id` (uuid, primary key)
+- `api_key` (text)
+- `model_name` (text)
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
+
+#### `sessions`
+- `session_id` (uuid, primary key)
+- `chatbot_id` (uuid, foreign key to chatbots.id)
+- `created_at` (timestamp)
+- `last_activity` (timestamp)
+- `is_active` (boolean)
+- `is_widget` (boolean, default: false)
+
+#### `conversations`
+- `id` (serial, primary key)
+- `session_id` (uuid, foreign key to sessions.session_id)
+- `role` (text, enum: 'user' or 'assistant')
+- `content` (text)
+- `timestamp` (timestamp)
 
 ## Deployment
 
 ### Heroku
 
-1. Install the Heroku CLI and login:
-   ```bash
-   heroku login
-   ```
-
-2. Create a new Heroku app:
-   ```bash
-   heroku create your-app-name
-   ```
-
-3. Set environment variables on Heroku:
+1. Install the Heroku CLI and login
+2. Create a new Heroku app
+3. Set environment variables:
    ```bash
    heroku config:set SUPABASE_URL=your_supabase_url
    heroku config:set SUPABASE_KEY=your_supabase_key
-   heroku config:set OPENROUTER_API_KEY=your_openrouter_api_key
+   heroku config:set OPENROUTER_API_KEY=your_openrouter_key
    ```
+4. Deploy your code
 
-4. Deploy your code:
+### Docker
+
+1. Build the Docker image:
    ```bash
-   git push heroku main
+   docker build -t ai-chatbot-backend .
    ```
-
-5. Scale the web process:
+2. Run the container:
    ```bash
-   heroku ps:scale web=1
-   ```
-
-## Testing
-
-1. Run the test suite:
-   ```bash
-   # Install test dependencies
-   pip install pytest httpx
-   
-   # Run tests
-   pytest
+   docker run -p 8000:8000 --env-file .env ai-chatbot-backend
    ```
 
 ## License
 
-MIT
+This project is licensed under the MIT License.
